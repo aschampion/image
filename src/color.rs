@@ -1,4 +1,4 @@
-use num_traits::{NumCast, Zero};
+use num_traits::{NumCast, ToPrimitive, Zero};
 use std::ops::{Index, IndexMut};
 
 use buffer::Pixel;
@@ -314,6 +314,11 @@ define_colors! {
     Rgba, 4, 1, "RGBA", ColorType::Rgba8, #[doc = "RGB colors + alpha channel"];
     Bgra, 4, 1, "BGRA", ColorType::Bgra8, #[doc = "BGR colors + alpha channel"];
     LumaA, 2, 1, "YA", ColorType::La8, #[doc = "Grayscale colors + alpha channel"];
+
+    // Rgb16, 3, 0, "RGB", ColorType::Rgb16, #[doc = "RGB 16-bpc colors"];
+    Luma16, 1, 0, "Y", ColorType::L16, #[doc = "Grayscale 16-bpc colors"];
+    // Rgba16, 4, 1, "RGBA", ColorType::Rgba16, #[doc = "RGB 16-bpc colors + alpha channel"];
+    // LumaA16, 2, 1, "YA", ColorType::La16, #[doc = "Grayscale 16-bpc colors + alpha channel"];
 }
 
 /// Provides color conversions for the different pixel types.
@@ -376,6 +381,39 @@ impl<T: Primitive + 'static> FromColor<Bgr<T>> for Luma<T> {
 impl<T: Primitive + 'static> FromColor<LumaA<T>> for Luma<T> {
     fn from_color(&mut self, other: &LumaA<T>) {
         self.channels_mut()[0] = other.channels()[0]
+    }
+}
+
+
+impl FromColor<Rgba<u16>> for Luma<u8> {
+    fn from_color(&mut self, other: &Rgba<u16>) {
+        let gray = self.channels_mut();
+        let rgb = other.channels();
+        let l = 0.2126f32 * rgb[0].to_f32().unwrap() + 0.7152f32 * rgb[1].to_f32().unwrap()
+            + 0.0722f32 * rgb[2].to_f32().unwrap();
+        gray[0] = NumCast::from(l).unwrap()
+    }
+}
+
+impl FromColor<Rgb<u16>> for Luma<u8> {
+    fn from_color(&mut self, other: &Rgb<u16>) {
+        let gray = self.channels_mut();
+        let rgb = other.channels();
+        let l = 0.2126f32 * rgb[0].to_f32().unwrap() + 0.7152f32 * rgb[1].to_f32().unwrap()
+            + 0.0722f32 * rgb[2].to_f32().unwrap();
+        gray[0] = NumCast::from(l).unwrap()
+    }
+}
+
+impl FromColor<Luma<u16>> for Luma<u8> {
+    fn from_color(&mut self, other: &Luma<u16>) {
+        self.channels_mut()[0] = (other.channels()[0] / 2) as u8
+    }
+}
+
+impl FromColor<LumaA<u16>> for Luma<u8> {
+    fn from_color(&mut self, other: &LumaA<u16>) {
+        self.channels_mut()[0] = (other.channels()[0] / 2) as u8
     }
 }
 
@@ -493,6 +531,17 @@ impl<T: Primitive + 'static> FromColor<Luma<T>> for Rgba<T> {
     }
 }
 
+impl FromColor<Luma<u16>> for Rgba<u8> {
+    fn from_color(&mut self, gray: &Luma<u16>) {
+        let rgba = self.channels_mut();
+        let gray = (gray.channels()[0] / 2) as u8;
+        rgba[0] = gray;
+        rgba[1] = gray;
+        rgba[2] = gray;
+        rgba[3] = u8::max_value();
+    }
+}
+
 
 /// `FromColor` for BGRA
 
@@ -605,6 +654,16 @@ impl<T: Primitive + 'static> FromColor<Luma<T>> for Rgb<T> {
         rgb[0] = gray;
         rgb[1] = gray;
         rgb[2] = gray;
+    }
+}
+
+impl FromColor<Luma<u16>> for Rgb<u8> {
+    fn from_color(&mut self, gray: &Luma<u16>) {
+        let rgba = self.channels_mut();
+        let gray = (gray.channels()[0] / 2) as u8;
+        rgba[0] = gray;
+        rgba[1] = gray;
+        rgba[2] = gray;
     }
 }
 
