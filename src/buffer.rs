@@ -5,7 +5,7 @@ use std::ops::{Deref, DerefMut, Index, IndexMut, Range};
 use std::path::Path;
 use std::slice::{Chunks, ChunksMut};
 
-use color::{ColorType, FromColor, Luma, LumaA, Rgb, Rgba, Bgr, Bgra};
+use color::{ColorType, FromColor, Luma, LumaA, Rgb, Rgba, Bgr, Bgra, Luma16, LumaA16, Rgb16, Rgba16};
 use flat::{FlatSamples, SampleLayout};
 use dynimage::{save_buffer, save_buffer_with_format};
 use image::{GenericImage, GenericImageView, ImageFormat};
@@ -1078,13 +1078,13 @@ pub(crate) type BgrImage = ImageBuffer<Bgr<u8>, Vec<u8>>;
 /// Sendable Bgr + alpha channel image buffer
 pub(crate) type BgraImage = ImageBuffer<Bgra<u8>, Vec<u8>>;
 /// Sendable 16-bit Rgb image buffer
-pub type Rgb16Image = ImageBuffer<Rgb<u16>, Vec<u16>>;
+pub type Rgb16Image = ImageBuffer<Rgb16<u16>, Vec<u16>>;
 /// Sendable 16-bit Rgb + alpha channel image buffer
-pub type Rgba16Image = ImageBuffer<Rgba<u16>, Vec<u16>>;
+pub type Rgba16Image = ImageBuffer<Rgba16<u16>, Vec<u16>>;
 /// Sendable 16-bit grayscale image buffer
-pub type Gray16Image = ImageBuffer<Luma<u16>, Vec<u16>>;
+pub type Gray16Image = ImageBuffer<Luma16<u16>, Vec<u16>>;
 /// Sendable 16-bit grayscale + alpha channel image buffer
-pub type GrayAlpha16Image = ImageBuffer<LumaA<u16>, Vec<u16>>;
+pub type GrayAlpha16Image = ImageBuffer<LumaA16<u16>, Vec<u16>>;
 
 #[cfg(test)]
 mod test {

@@ -366,7 +366,7 @@ pub(crate) fn load_rect<'a, D, F, F1, F2, E>(x: u32, y: u32, width: u32, height:
     Ok(seek_scanline(decoder, 0)?)
 }
 
-/// Reads all of the bytes of a decoder into a Vec<u8>. No particular alignment
+/// Reads all of the bytes of a decoder into a Vec<T>. No particular alignment
 /// of the output buffer is guaranteed.
 ///
 /// Panics if there isn't enough memory to decode the image.
