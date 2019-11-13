@@ -370,9 +370,14 @@ pub(crate) fn load_rect<'a, D, F, F1, F2, E>(x: u32, y: u32, width: u32, height:
 /// of the output buffer is guaranteed.
 ///
 /// Panics if there isn't enough memory to decode the image.
-pub(crate) fn decoder_to_vec<'a>(decoder: impl ImageDecoder<'a>) -> ImageResult<Vec<u8>> {
-    let mut buf = vec![0; usize::try_from(decoder.total_bytes()).unwrap()];
-    decoder.read_image(&mut buf)?;
+pub(crate) fn decoder_to_vec<'a, T>(decoder: impl ImageDecoder<'a>) -> ImageResult<Vec<T>>
+where
+    T: ::traits::Primitive + zerocopy::AsBytes + zerocopy::FromBytes,
+{
+    use zerocopy::{AsBytes};
+
+    let mut buf = vec![num_traits::Zero::zero(); usize::try_from(decoder.total_bytes()).unwrap() / std::mem::size_of::<T>()];
+    decoder.read_image(buf.as_bytes_mut())?;
     Ok(buf)
 }
 
