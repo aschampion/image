@@ -404,32 +404,32 @@ where
 }
 
 /// Coefficients to transform from sRGB to a CIE Y (luminance) value.
-const sRGB_luma: [f32; 3] = [0.2126, 0.7152, 0.0722];
+const SRGB_LUMA: [f32; 3] = [0.2126, 0.7152, 0.0722];
 
 #[inline]
 fn rgb_to_luma<T: Primitive>(rgb: &[T]) -> T {
-    let l = sRGB_luma[0] * rgb[0].to_f32().unwrap()
-        + sRGB_luma[1] * rgb[1].to_f32().unwrap()
-        + sRGB_luma[2] * rgb[2].to_f32().unwrap();
+    let l = SRGB_LUMA[0] * rgb[0].to_f32().unwrap()
+        + SRGB_LUMA[1] * rgb[1].to_f32().unwrap()
+        + SRGB_LUMA[2] * rgb[2].to_f32().unwrap();
     NumCast::from(l).unwrap()
 }
 
 #[inline]
 fn bgr_to_luma<T: Primitive>(bgr: &[T]) -> T {
-    let l = sRGB_luma[0] * bgr[2].to_f32().unwrap()
-        + sRGB_luma[1] * bgr[1].to_f32().unwrap()
-        + sRGB_luma[2] * bgr[0].to_f32().unwrap();
+    let l = SRGB_LUMA[0] * bgr[2].to_f32().unwrap()
+        + SRGB_LUMA[1] * bgr[1].to_f32().unwrap()
+        + SRGB_LUMA[2] * bgr[0].to_f32().unwrap();
     NumCast::from(l).unwrap()
 }
 
 #[inline]
 fn downcast_channel(c16: u16) -> u8 {
-    NumCast::from(c16.to_u32().unwrap() / 2).unwrap()
+    NumCast::from(c16.to_u64().unwrap() >> 8).unwrap()
 }
 
 #[inline]
 fn upcast_channel(c8: u8) -> u16 {
-    NumCast::from(c8.to_u32().unwrap() * 2).unwrap()
+    NumCast::from(c8.to_u64().unwrap() << 8).unwrap()
 }
 
 macro_rules! bit_depth_common {

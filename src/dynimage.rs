@@ -22,7 +22,6 @@ use buffer::{
     RgbaImage, Rgba16Image,
 };
 use color;
-use flat::FlatSamples;
 use image;
 use image::{
     GenericImage, GenericImageView, ImageDecoder, ImageError, ImageFormat, ImageOutputFormat, ImageResult,
@@ -1071,5 +1070,13 @@ mod test {
         let im_path = "./tests/images/jpg/progressive/cat.jpg";
         let dims = super::image_dimensions(im_path).unwrap();
         assert_eq!(dims, (320, 240));
+    }
+
+    #[cfg(feature = "png")]
+    #[test]
+    fn open_16bpc_png() {
+        let im_path = "./tests/images/png/16bpc/basn6a16.png";
+        let image = super::open(im_path).unwrap();
+        assert_eq!(image.color(), super::color::ColorType::Rgba16);
     }
 }

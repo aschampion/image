@@ -101,7 +101,11 @@ impl<R: Read> PngDecoder<R> {
         let limits = png::Limits {
             bytes: usize::max_value(),
         };
-        let decoder = png::Decoder::new_with_limits(r, limits);
+        let mut decoder = png::Decoder::new_with_limits(r, limits);
+        // By default the PNG decoder will scale 16 bpc to 8 bpc, so custom
+        // transformations must be set. EXPAND preserves the default behavior
+        // expanding bpc < 8 to 8 bpc.
+        decoder.set_transformations(png::Transformations::EXPAND);
         let (_, mut reader) = decoder.read_info().map_err(ImageError::from_png)?;
         let (color_type, bits) = reader.output_color_type();
         let color_type = match (color_type, bits) {
