@@ -169,8 +169,18 @@ impl<'a, R: 'a + Read> ImageDecoder<'a> for PngDecoder<R> {
     }
 
     fn read_image(mut self, buf: &mut [u8]) -> ImageResult<()> {
+        use byteorder::{BigEndian, ByteOrder, NativeEndian};
+
         assert_eq!(u64::try_from(buf.len()), Ok(self.total_bytes()));
         self.reader.next_frame(buf).map_err(ImageError::from_png)?;
+        // PNG images are big endian. For 16 bit per channel and larger types,
+        // the buffer may need to be reordered to native endianness per the
+        // contract of `read_image`.
+        match self.color_type().bytes_per_channel() {
+            1 => (),  // No reodering necessary for u8
+            2 => buf.chunks_mut(2).for_each(|c| NativeEndian::write_u16(c, BigEndian::read_u16(c))),
+            _ => unreachable!(),
+        }
         Ok(())
     }
 

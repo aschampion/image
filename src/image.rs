@@ -10,6 +10,7 @@ use std::ops::{Deref, DerefMut};
 
 use buffer::{ImageBuffer, Pixel};
 use color::{ColorType, ExtendedColorType};
+use zerocopy::{AsBytes, FromBytes};
 
 use animation::Frames;
 
@@ -372,10 +373,8 @@ pub(crate) fn load_rect<'a, D, F, F1, F2, E>(x: u32, y: u32, width: u32, height:
 /// Panics if there isn't enough memory to decode the image.
 pub(crate) fn decoder_to_vec<'a, T>(decoder: impl ImageDecoder<'a>) -> ImageResult<Vec<T>>
 where
-    T: ::traits::Primitive + zerocopy::AsBytes + zerocopy::FromBytes,
+    T: ::traits::Primitive + AsBytes + FromBytes,
 {
-    use zerocopy::{AsBytes};
-
     let mut buf = vec![num_traits::Zero::zero(); usize::try_from(decoder.total_bytes()).unwrap() / std::mem::size_of::<T>()];
     decoder.read_image(buf.as_bytes_mut())?;
     Ok(buf)
