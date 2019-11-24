@@ -13,13 +13,6 @@ use traits::Primitive;
 use utils::expand_packed;
 use zerocopy::AsBytes;
 
-// pub trait DowncastableSubpixel: Primitive {
-//     type Subpixel8bpc: Primitive;
-// }
-
-// impl DowncastableSubpixel for u16 {
-//     type Subpixel8bpc = u8;
-// }
 
 /// A generalized pixel.
 ///
@@ -110,11 +103,6 @@ pub trait Pixel: Copy + Clone {
 
     /// Convert this pixel to BGR with an alpha channel
     fn to_bgra(&self) -> Bgra<Self::Subpixel>;
-
-    // fn to_8bpc<P>(&self) -> P
-    // where
-    //     Self::Subpixel: DowncastableSubpixel,
-    //     P: Pixel<Subpixel=<Self::Subpixel as DowncastableSubpixel>::Subpixel8bpc>;
 
     /// Apply the function ```f``` to each channel of this pixel.
     fn map<F>(&self, f: F) -> Self
