@@ -7,11 +7,17 @@ use traits::Primitive;
 /// Supported ordered sets of channels
 #[derive(Copy, PartialEq, Eq, Debug, Clone, Hash)]
 pub enum ChannelsType {
+    /// Luminance
     L,
+    /// Luminance and alpha
     La,
+    /// Red, green and blue
     Rgb,
+    /// Red, green, blue and alpha
     Rgba,
+    /// Blue, green and red
     Bgr,
+    /// Blue, green, red and alpha
     Bgra,
 }
 
@@ -347,6 +353,12 @@ impl<T: Primitive> IndexMut<usize> for $ident<T> {
     #[inline(always)]
     fn index_mut(&mut self, _index: usize) -> &mut T {
         &mut self.0[_index]
+    }
+}
+
+impl<T: Primitive + 'static> From<[T; $channels]> for $ident<T> {
+    fn from(c: [T; $channels]) -> Self {
+        Self(c)
     }
 }
 
@@ -1303,7 +1315,7 @@ mod tests {
 
     macro_rules! test_lossless_conversion {
         ($a:ty, $b:ty, $c:ty) => {
-            let a: $a = [<$a as Pixel>::Subpixel::max_value(); <$a as Pixel>::CHANNEL_COUNT as usize].into();
+            let a: $a = [<$a as Pixel>::Subpixel::max_value() >> 2; <$a as Pixel>::CHANNEL_COUNT as usize].into();
             let b: $b = a.into_color();
             let c: $c = b.into_color();
             assert_eq!(a.channels(), c.channels());
