@@ -29,7 +29,7 @@ use webp;
 use color;
 use image;
 use dynimage::DynamicImage;
-use image::{ImageDecoder, ImageFormat, ImageResult};
+use image::{ImageDecoder, ImageEncoder, ImageFormat, ImageResult};
 use ImageError;
 
 /// Internal error type for guessing format from path.
@@ -144,30 +144,29 @@ pub(crate) fn save_buffer_impl(
 
     match &*ext {
         #[cfg(feature = "ico")]
-        "ico" => ico::ICOEncoder::new(fout).encode(buf, width, height, color),
+        "ico" => ico::ICOEncoder::new(fout).write_image(buf, width, height, color),
         #[cfg(feature = "jpeg")]
-        "jpg" | "jpeg" => jpeg::JPEGEncoder::new(fout).encode(buf, width, height, color),
+        "jpg" | "jpeg" => jpeg::JPEGEncoder::new(fout).write_image(buf, width, height, color),
         #[cfg(feature = "png_codec")]
-        "png" => png::PNGEncoder::new(fout).encode(buf, width, height, color),
+        "png" => png::PNGEncoder::new(fout).write_image(buf, width, height, color),
         #[cfg(feature = "pnm")]
         "pbm" => pnm::PNMEncoder::new(fout)
             .with_subtype(pnm::PNMSubtype::Bitmap(pnm::SampleEncoding::Binary))
-            .encode(buf, width, height, color),
+            .write_image(buf, width, height, color),
         #[cfg(feature = "pnm")]
         "pgm" => pnm::PNMEncoder::new(fout)
             .with_subtype(pnm::PNMSubtype::Graymap(pnm::SampleEncoding::Binary))
-            .encode(buf, width, height, color),
+            .write_image(buf, width, height, color),
         #[cfg(feature = "pnm")]
         "ppm" => pnm::PNMEncoder::new(fout)
             .with_subtype(pnm::PNMSubtype::Pixmap(pnm::SampleEncoding::Binary))
-            .encode(buf, width, height, color),
+            .write_image(buf, width, height, color),
         #[cfg(feature = "pnm")]
-        "pam" => pnm::PNMEncoder::new(fout).encode(buf, width, height, color),
+        "pam" => pnm::PNMEncoder::new(fout).write_image(buf, width, height, color),
         #[cfg(feature = "bmp")]
-        "bmp" => bmp::BMPEncoder::new(fout).encode(buf, width, height, color),
+        "bmp" => bmp::BMPEncoder::new(fout).write_image(buf, width, height, color),
         #[cfg(feature = "tiff")]
-        "tif" | "tiff" => tiff::TiffEncoder::new(fout).encode(buf, width, height, color)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, Box::new(e))), // FIXME: see https://github.com/image-rs/image/issues/921
+        "tif" | "tiff" => tiff::TiffEncoder::new(fout).write_image(buf, width, height, color),
         format => Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             &format!("Unsupported image format image/{:?}", format)[..],
@@ -187,17 +186,15 @@ pub(crate) fn save_buffer_with_format_impl(
 
     match format {
         #[cfg(feature = "ico")]
-        image::ImageFormat::Ico => ico::ICOEncoder::new(fout).encode(buf, width, height, color),
+        image::ImageFormat::Ico => ico::ICOEncoder::new(fout).write_image(buf, width, height, color),
         #[cfg(feature = "jpeg")]
-        image::ImageFormat::Jpeg => jpeg::JPEGEncoder::new(fout).encode(buf, width, height, color),
+        image::ImageFormat::Jpeg => jpeg::JPEGEncoder::new(fout).write_image(buf, width, height, color),
         #[cfg(feature = "png_codec")]
-        image::ImageFormat::Png => png::PNGEncoder::new(fout).encode(buf, width, height, color),
+        image::ImageFormat::Png => png::PNGEncoder::new(fout).write_image(buf, width, height, color),
         #[cfg(feature = "bmp")]
-        image::ImageFormat::Bmp => bmp::BMPEncoder::new(fout).encode(buf, width, height, color),
+        image::ImageFormat::Bmp => bmp::BMPEncoder::new(fout).write_image(buf, width, height, color),
         #[cfg(feature = "tiff")]
-        image::ImageFormat::Tiff => tiff::TiffEncoder::new(fout)
-            .encode(buf, width, height, color)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, Box::new(e))),
+        image::ImageFormat::Tiff => tiff::TiffEncoder::new(fout).write_image(buf, width, height, color),
         _ => Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             &format!("Unsupported image format image/{:?}", format)[..],

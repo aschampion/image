@@ -2,6 +2,7 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use std::io::{self, Write};
 
 use color;
+use image::ImageEncoder;
 
 const BITMAPFILEHEADER_SIZE: u32 = 14;
 const BITMAPINFOHEADER_SIZE: u32 = 40;
@@ -209,6 +210,18 @@ impl<'a, W: Write + 'a> BMPEncoder<'a, W> {
         }
 
         Ok(())
+    }
+}
+
+impl<'a, W: Write> ImageEncoder for BMPEncoder<'a, W> {
+    fn write_image(
+        mut self,
+        buf: &[u8],
+        width: u32,
+        height: u32,
+        color_type: color::ColorType,
+    ) -> io::Result<()> {
+        self.encode(buf, width, height, color_type)
     }
 }
 
