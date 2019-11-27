@@ -898,17 +898,8 @@ pub(crate) trait Blend {
     fn blend(&mut self, other: &Self);
 }
 
-macro_rules! blend_bit_depth_common {
-    ($luma:ident, $luma_a:ident, $rgb:ident, $rgba:ident) => {
-
-impl<T: Primitive> Blend for $luma<T> {
-    fn blend(&mut self, other: &$luma<T>) {
-        *self = *other
-    }
-}
-
-impl<T: Primitive> Blend for $luma_a<T> {
-    fn blend(&mut self, other: &$luma_a<T>) {
+impl<T: Primitive> Blend for LumaA<T> {
+    fn blend(&mut self, other: &LumaA<T>) {
         let max_t = T::max_value();
         let max_t = max_t.to_f32().unwrap();
         let (bg_luma, bg_a) = (self.0[0], self.0[1]);
@@ -933,21 +924,21 @@ impl<T: Primitive> Blend for $luma_a<T> {
         let out_luma_a = fg_luma_a + bg_luma_a * (1.0 - fg_a);
         let out_luma = out_luma_a / alpha_final;
 
-        *self = $luma_a([
+        *self = LumaA([
             NumCast::from(max_t * out_luma).unwrap(),
             NumCast::from(max_t * alpha_final).unwrap(),
         ])
     }
 }
 
-impl<T: Primitive> Blend for $rgb<T> {
-    fn blend(&mut self, other: &$rgb<T>) {
+impl<T: Primitive> Blend for Luma<T> {
+    fn blend(&mut self, other: &Luma<T>) {
         *self = *other
     }
 }
 
-impl<T: Primitive> Blend for $rgba<T> {
-    fn blend(&mut self, other: &$rgba<T>) {
+impl<T: Primitive> Blend for Rgba<T> {
+    fn blend(&mut self, other: &Rgba<T>) {
         // http://stackoverflow.com/questions/7438263/alpha-compositing-algorithm-blend-modes#answer-11163848
 
         // First, as we don't know what type our pixel is, we have to convert to floats between 0.0 and 1.0
@@ -993,7 +984,7 @@ impl<T: Primitive> Blend for $rgba<T> {
         );
 
         // Cast back to our initial type on return
-        *self = $rgba([
+        *self = Rgba([
             NumCast::from(max_t * out_r).unwrap(),
             NumCast::from(max_t * out_g).unwrap(),
             NumCast::from(max_t * out_b).unwrap(),
@@ -1002,11 +993,6 @@ impl<T: Primitive> Blend for $rgba<T> {
     }
 }
 
-    }
-}
-
-blend_bit_depth_common!(Luma, LumaA, Rgb, Rgba);
-// blend_bit_depth_common!(Luma16, LumaA16, Rgb16, Rgba16);
 
 impl<T: Primitive> Blend for Bgra<T> {
     fn blend(&mut self, other: &Bgra<T>) {
@@ -1064,6 +1050,12 @@ impl<T: Primitive> Blend for Bgra<T> {
     }
 }
 
+impl<T: Primitive> Blend for Rgb<T> {
+    fn blend(&mut self, other: &Rgb<T>) {
+        *self = *other
+    }
+}
+
 impl<T: Primitive> Blend for Bgr<T> {
     fn blend(&mut self, other: &Bgr<T>) {
         *self = *other
@@ -1077,57 +1069,49 @@ pub(crate) trait Invert {
     fn invert(&mut self);
 }
 
-macro_rules! invert_bit_depth_common {
-    ($luma:ident, $luma_a:ident, $rgb:ident, $rgba:ident) => {
+impl<T: Primitive> Invert for Luma<T> {
+    fn invert(&mut self) {
+        let l = self.0;
 
-        impl<T: Primitive> Invert for $luma<T> {
-            fn invert(&mut self) {
-                let l = self.0;
+        let max = T::max_value();
+        let l1 = max - l[0];
 
-                let max = T::max_value();
-                let l1 = max - l[0];
-
-                *self = $luma([l1])
-            }
-        }
-
-        impl<T: Primitive> Invert for $luma_a<T> {
-            fn invert(&mut self) {
-                let l = self.0;
-                let max = T::max_value();
-
-                *self = $luma_a([max - l[0], l[1]])
-            }
-        }
-
-        impl<T: Primitive> Invert for $rgb<T> {
-            fn invert(&mut self) {
-                let rgb = self.0;
-
-                let max = T::max_value();
-
-                let r1 = max - rgb[0];
-                let g1 = max - rgb[1];
-                let b1 = max - rgb[2];
-
-                *self = $rgb([r1, g1, b1])
-            }
-        }
-
-        impl<T: Primitive> Invert for $rgba<T> {
-            fn invert(&mut self) {
-                let rgba = self.0;
-
-                let max = T::max_value();
-
-                *self = $rgba([max - rgba[0], max - rgba[1], max - rgba[2], rgba[3]])
-            }
-        }
-    };
+        *self = Luma([l1])
+    }
 }
 
-invert_bit_depth_common!(Luma, LumaA, Rgb, Rgba);
-// invert_bit_depth_common!(Luma16, LumaA16, Rgb16, Rgba16);
+impl<T: Primitive> Invert for LumaA<T> {
+    fn invert(&mut self) {
+        let l = self.0;
+        let max = T::max_value();
+
+        *self = LumaA([max - l[0], l[1]])
+    }
+}
+
+impl<T: Primitive> Invert for Rgb<T> {
+    fn invert(&mut self) {
+        let rgb = self.0;
+
+        let max = T::max_value();
+
+        let r1 = max - rgb[0];
+        let g1 = max - rgb[1];
+        let b1 = max - rgb[2];
+
+        *self = Rgb([r1, g1, b1])
+    }
+}
+
+impl<T: Primitive> Invert for Rgba<T> {
+    fn invert(&mut self) {
+        let rgba = self.0;
+
+        let max = T::max_value();
+
+        *self = Rgba([max - rgba[0], max - rgba[1], max - rgba[2], rgba[3]])
+    }
+}
 
 impl<T: Primitive> Invert for Bgra<T> {
     fn invert(&mut self) {
