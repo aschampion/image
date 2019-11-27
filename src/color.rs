@@ -1327,6 +1327,7 @@ mod tests {
         use super::IntoColor;
 
         test_lossless_conversion!(Bgr<u8>, Rgba<u8>, Bgr<u8>);
+        test_lossless_conversion!(Bgra<u8>, Rgba<u8>, Bgra<u8>);
         test_lossless_conversion!(Luma<u8>, Luma<u16>, Luma<u8>);
         test_lossless_conversion!(LumaA<u8>, LumaA<u16>, LumaA<u8>);
         test_lossless_conversion!(Rgb<u8>, Rgb<u16>, Rgb<u8>);

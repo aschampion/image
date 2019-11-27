@@ -853,13 +853,13 @@ fn image_to_bytes(image: &DynamicImage) -> Vec<u8> {
 
         DynamicImage::ImageBgra8(ref a) => a.iter().cloned().collect(),
 
-        DynamicImage::ImageLuma16(ref a) => a.as_bytes().iter().cloned().collect(),
+        DynamicImage::ImageLuma16(ref a) => a.as_bytes().to_vec(),
 
-        DynamicImage::ImageLumaA16(ref a) => a.as_bytes().iter().cloned().collect(),
+        DynamicImage::ImageLumaA16(ref a) => a.as_bytes().to_vec(),
 
-        DynamicImage::ImageRgb16(ref a) => a.as_bytes().iter().cloned().collect(),
+        DynamicImage::ImageRgb16(ref a) => a.as_bytes().to_vec(),
 
-        DynamicImage::ImageRgba16(ref a) => a.as_bytes().iter().cloned().collect(),
+        DynamicImage::ImageRgba16(ref a) => a.as_bytes().to_vec(),
     }
 }
 
