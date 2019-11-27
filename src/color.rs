@@ -439,9 +439,18 @@ fn upcast_channel(c8: u8) -> u16 {
 
 // `FromColor` for Luma
 
-impl<T: Primitive + 'static> FromColor<LumaA<T>> for Luma<T> {
-    fn from_color(&mut self, other: &LumaA<T>) {
-        self.channels_mut()[0] = other.channels()[0]
+impl<T: Primitive + 'static> FromColor<Rgba<T>> for Luma<T> {
+    fn from_color(&mut self, other: &Rgba<T>) {
+        let gray = self.channels_mut();
+        gray[0] = rgb_to_luma(other.channels());
+    }
+}
+
+impl<T: Primitive + 'static> FromColor<Bgra<T>> for Luma<T> {
+    fn from_color(&mut self, other: &Bgra<T>) {
+        let gray = self.channels_mut();
+        let bgra = other.channels();
+        gray[0] = bgr_to_luma(bgra);
     }
 }
 
@@ -452,19 +461,76 @@ impl<T: Primitive + 'static> FromColor<Rgb<T>> for Luma<T> {
     }
 }
 
-impl<T: Primitive + 'static> FromColor<Rgba<T>> for Luma<T> {
-    fn from_color(&mut self, other: &Rgba<T>) {
+impl<T: Primitive + 'static> FromColor<Bgr<T>> for Luma<T> {
+    fn from_color(&mut self, other: &Bgr<T>) {
         let gray = self.channels_mut();
-        gray[0] = rgb_to_luma(other.channels());
+        let bgr = other.channels();
+        gray[0] = bgr_to_luma(bgr);
+    }
+}
+
+impl<T: Primitive + 'static> FromColor<LumaA<T>> for Luma<T> {
+    fn from_color(&mut self, other: &LumaA<T>) {
+        self.channels_mut()[0] = other.channels()[0]
+    }
+}
+
+
+impl FromColor<Rgba<u16>> for Luma<u8> {
+    fn from_color(&mut self, other: &Rgba<u16>) {
+        let gray = self.channels_mut();
+        let rgb = other.channels();
+        let l = rgb_to_luma(rgb);
+        gray[0] = downcast_channel(l);
+    }
+}
+
+impl FromColor<Rgb<u16>> for Luma<u8> {
+    fn from_color(&mut self, other: &Rgb<u16>) {
+        let gray = self.channels_mut();
+        let rgb = other.channels();
+        let l = rgb_to_luma(rgb);
+        gray[0] = downcast_channel(l);
+    }
+}
+
+impl FromColor<Luma<u16>> for Luma<u8> {
+    fn from_color(&mut self, other: &Luma<u16>) {
+        let l = other.channels()[0];
+        self.channels_mut()[0] = downcast_channel(l);
+    }
+}
+
+impl FromColor<Luma<u8>> for Luma<u16> {
+    fn from_color(&mut self, other: &Luma<u8>) {
+        let l = other.channels()[0];
+        self.channels_mut()[0] = upcast_channel(l);
+    }
+}
+
+impl FromColor<LumaA<u16>> for Luma<u8> {
+    fn from_color(&mut self, other: &LumaA<u16>) {
+        let l = other.channels()[0];
+        self.channels_mut()[0] = downcast_channel(l);
     }
 }
 
 // `FromColor` for LumaA
 
+impl<T: Primitive + 'static> FromColor<Rgba<T>> for LumaA<T> {
+    fn from_color(&mut self, other: &Rgba<T>) {
+        let gray_a = self.channels_mut();
+        let rgba = other.channels();
+        gray_a[0] = rgb_to_luma(rgba);
+        gray_a[1] = rgba[3];
+    }
+}
+
 impl<T: Primitive + 'static> FromColor<Luma<T>> for LumaA<T> {
     fn from_color(&mut self, other: &Luma<T>) {
-        self.channels_mut()[0] = other.channels()[0];
-        // TODO
+        let gray_a = self.channels_mut();
+        gray_a[0] = other.channels()[0];
+        gray_a[1] = T::max_value();
     }
 }
 
@@ -474,15 +540,6 @@ impl<T: Primitive + 'static> FromColor<Rgb<T>> for LumaA<T> {
         let rgb = other.channels();
         gray_a[0] = rgb_to_luma(rgb);
         gray_a[1] = T::max_value();
-    }
-}
-
-impl<T: Primitive + 'static> FromColor<Rgba<T>> for LumaA<T> {
-    fn from_color(&mut self, other: &Rgba<T>) {
-        let gray_a = self.channels_mut();
-        let rgba = other.channels();
-        gray_a[0] = rgb_to_luma(rgba);
-        gray_a[1] = rgba[3];
     }
 }
 
@@ -554,99 +611,6 @@ impl<T: Primitive + 'static> FromColor<Rgb<T>> for Rgba<T> {
     }
 }
 
-macro_rules! downcast_bit_depth_early {
-    ($src:ident, $intermediate:ident, $dst:ident) => {
-        impl FromColor<$src<u16>> for $dst<u8> {
-            fn from_color(&mut self, other: &$src<u16>) {
-                let mut intermediate: $intermediate<u8> = $intermediate([Zero::zero(); <$intermediate<u8> as Pixel>::CHANNEL_COUNT as usize]);
-                intermediate.from_color(other);
-                self.from_color(&intermediate);
-            }
-        }
-    };
-}
-
-// Downcasts
-// LumaA
-downcast_bit_depth_early!(Luma, Luma, LumaA);
-downcast_bit_depth_early!(Rgb, Rgb, LumaA);
-downcast_bit_depth_early!(Rgba, Rgba, LumaA);
-// Rgb
-downcast_bit_depth_early!(Luma, Luma, Rgb);
-downcast_bit_depth_early!(LumaA, LumaA, Rgb);
-downcast_bit_depth_early!(Rgba, Rgba, Rgb);
-// Rgba
-downcast_bit_depth_early!(Luma, Luma, Rgba);
-downcast_bit_depth_early!(LumaA, LumaA, Rgba);
-downcast_bit_depth_early!(Rgb, Rgb, Rgba);
-// Bgr
-downcast_bit_depth_early!(Luma, Luma, Bgr);
-downcast_bit_depth_early!(LumaA, LumaA, Bgr);
-downcast_bit_depth_early!(Rgb, Rgb, Bgr);
-downcast_bit_depth_early!(Rgba, Rgba, Bgr);
-// Bgra
-downcast_bit_depth_early!(Luma, Luma, Bgra);
-downcast_bit_depth_early!(LumaA, LumaA, Bgra);
-downcast_bit_depth_early!(Rgb, Rgb, Bgra);
-downcast_bit_depth_early!(Rgba, Rgba, Bgra);
-
-
-impl<T: Primitive + 'static> FromColor<Bgra<T>> for Luma<T> {
-    fn from_color(&mut self, other: &Bgra<T>) {
-        let gray = self.channels_mut();
-        let bgra = other.channels();
-        gray[0] = bgr_to_luma(bgra);
-    }
-}
-
-impl<T: Primitive + 'static> FromColor<Bgr<T>> for Luma<T> {
-    fn from_color(&mut self, other: &Bgr<T>) {
-        let gray = self.channels_mut();
-        let bgr = other.channels();
-        gray[0] = bgr_to_luma(bgr);
-    }
-}
-
-
-impl FromColor<Rgba<u16>> for Luma<u8> {
-    fn from_color(&mut self, other: &Rgba<u16>) {
-        let gray = self.channels_mut();
-        let rgb = other.channels();
-        let l = rgb_to_luma(rgb);
-        gray[0] = downcast_channel(l);
-    }
-}
-
-impl FromColor<Rgb<u16>> for Luma<u8> {
-    fn from_color(&mut self, other: &Rgb<u16>) {
-        let gray = self.channels_mut();
-        let rgb = other.channels();
-        let l = rgb_to_luma(rgb);
-        gray[0] = downcast_channel(l);
-    }
-}
-
-impl FromColor<Luma<u16>> for Luma<u8> {
-    fn from_color(&mut self, other: &Luma<u16>) {
-        let l = other.channels()[0];
-        self.channels_mut()[0] = downcast_channel(l);
-    }
-}
-
-impl FromColor<Luma<u8>> for Luma<u16> {
-    fn from_color(&mut self, other: &Luma<u8>) {
-        let l = other.channels()[0];
-        self.channels_mut()[0] = upcast_channel(l);
-    }
-}
-
-impl FromColor<LumaA<u16>> for Luma<u8> {
-    fn from_color(&mut self, other: &LumaA<u16>) {
-        let l = other.channels()[0];
-        self.channels_mut()[0] = downcast_channel(l);
-    }
-}
-
 // `FromColor` for LumaA
 
 impl<T: Primitive + 'static> FromColor<Bgra<T>> for LumaA<T> {
@@ -665,6 +629,26 @@ impl<T: Primitive + 'static> FromColor<Bgr<T>> for LumaA<T> {
         let bgr = other.channels();
         gray_a[0] = bgr_to_luma(bgr);
         gray_a[1] = T::max_value();
+    }
+}
+
+impl FromColor<LumaA<u16>> for LumaA<u8> {
+    fn from_color(&mut self, other: &LumaA<u16>) {
+        let la8 = self.channels_mut();
+        let gray = other.channels()[0];
+        let alpha = other.channels()[1];
+        la8[0] = downcast_channel(gray);
+        la8[1] = downcast_channel(alpha);
+    }
+}
+
+impl FromColor<LumaA<u8>> for LumaA<u16> {
+    fn from_color(&mut self, other: &LumaA<u8>) {
+        let la8 = self.channels_mut();
+        let gray = other.channels()[0];
+        let alpha = other.channels()[1];
+        la8[0] = upcast_channel(gray);
+        la8[1] = upcast_channel(alpha);
     }
 }
 
@@ -864,26 +848,41 @@ impl<T: Primitive + 'static> FromColor<Luma<T>> for Bgr<T> {
     }
 }
 
-
-impl FromColor<LumaA<u16>> for LumaA<u8> {
-    fn from_color(&mut self, other: &LumaA<u16>) {
-        let la8 = self.channels_mut();
-        let gray = other.channels()[0];
-        let alpha = other.channels()[1];
-        la8[0] = downcast_channel(gray);
-        la8[1] = downcast_channel(alpha);
-    }
+macro_rules! downcast_bit_depth_early {
+    ($src:ident, $intermediate:ident, $dst:ident) => {
+        impl FromColor<$src<u16>> for $dst<u8> {
+            fn from_color(&mut self, other: &$src<u16>) {
+                let mut intermediate: $intermediate<u8> = $intermediate([Zero::zero(); <$intermediate<u8> as Pixel>::CHANNEL_COUNT as usize]);
+                intermediate.from_color(other);
+                self.from_color(&intermediate);
+            }
+        }
+    };
 }
 
-impl FromColor<LumaA<u8>> for LumaA<u16> {
-    fn from_color(&mut self, other: &LumaA<u8>) {
-        let la8 = self.channels_mut();
-        let gray = other.channels()[0];
-        let alpha = other.channels()[1];
-        la8[0] = upcast_channel(gray);
-        la8[1] = upcast_channel(alpha);
-    }
-}
+// Downcasts
+// LumaA
+downcast_bit_depth_early!(Luma, Luma, LumaA);
+downcast_bit_depth_early!(Rgb, Rgb, LumaA);
+downcast_bit_depth_early!(Rgba, Rgba, LumaA);
+// Rgb
+downcast_bit_depth_early!(Luma, Luma, Rgb);
+downcast_bit_depth_early!(LumaA, LumaA, Rgb);
+downcast_bit_depth_early!(Rgba, Rgba, Rgb);
+// Rgba
+downcast_bit_depth_early!(Luma, Luma, Rgba);
+downcast_bit_depth_early!(LumaA, LumaA, Rgba);
+downcast_bit_depth_early!(Rgb, Rgb, Rgba);
+// Bgr
+downcast_bit_depth_early!(Luma, Luma, Bgr);
+downcast_bit_depth_early!(LumaA, LumaA, Bgr);
+downcast_bit_depth_early!(Rgb, Rgb, Bgr);
+downcast_bit_depth_early!(Rgba, Rgba, Bgr);
+// Bgra
+downcast_bit_depth_early!(Luma, Luma, Bgra);
+downcast_bit_depth_early!(LumaA, LumaA, Bgra);
+downcast_bit_depth_early!(Rgb, Rgb, Bgra);
+downcast_bit_depth_early!(Rgba, Rgba, Bgra);
 
 
 /// Blends a color inter another one
@@ -1104,6 +1103,7 @@ impl<T: Primitive> Invert for Bgra<T> {
         *self = Bgra([max - bgra[2], max - bgra[1], max - bgra[0], bgra[3]])
     }
 }
+
 
 impl<T: Primitive> Invert for Rgb<T> {
     fn invert(&mut self) {
