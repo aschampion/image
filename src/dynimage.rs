@@ -21,7 +21,7 @@ use buffer::{
     GrayImage, Gray16Image, ImageBuffer, Pixel, RgbImage, Rgb16Image,
     RgbaImage, Rgba16Image,
 };
-use color;
+use color::{self, IntoColor};
 use image;
 use image::{
     GenericImage, GenericImageView, ImageDecoder, ImageError, ImageFormat, ImageOutputFormat, ImageResult,
@@ -397,11 +397,6 @@ impl DynamicImage {
         image_to_bytes(self)
     }
 
-    // /// Return a view on the raw sample buffer.
-    // pub fn as_flat_samples(&self) -> FlatSamples<&[u8]> {
-    //     dynamic_map!(*self, ref p -> p.as_flat_samples())
-    // }
-
     /// Return this image's color type.
     pub fn color(&self) -> color::ColorType {
         match *self {
@@ -714,8 +709,6 @@ impl GenericImageView for DynamicImage {
     }
 
     fn get_pixel(&self, x: u32, y: u32) -> color::Rgba<u8> {
-        use color::IntoColor;
-
         dynamic_map!(*self, ref p -> p.get_pixel(x, y).to_rgba().into_color())
     }
 
@@ -729,8 +722,6 @@ impl GenericImage for DynamicImage {
     type InnerImage = DynamicImage;
 
     fn put_pixel(&mut self, x: u32, y: u32, pixel: color::Rgba<u8>) {
-        use color::IntoColor;
-
         match *self {
             DynamicImage::ImageLuma8(ref mut p) => p.put_pixel(x, y, pixel.to_luma()),
             DynamicImage::ImageLumaA8(ref mut p) => p.put_pixel(x, y, pixel.to_luma_alpha()),
@@ -746,8 +737,6 @@ impl GenericImage for DynamicImage {
     }
     /// DEPRECATED: Use iterator `pixels_mut` to blend the pixels directly.
     fn blend_pixel(&mut self, x: u32, y: u32, pixel: color::Rgba<u8>) {
-        use color::IntoColor;
-
         match *self {
             DynamicImage::ImageLuma8(ref mut p) => p.blend_pixel(x, y, pixel.to_luma()),
             DynamicImage::ImageLumaA8(ref mut p) => p.blend_pixel(x, y, pixel.to_luma_alpha()),
